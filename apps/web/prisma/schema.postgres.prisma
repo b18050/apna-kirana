@@ -2,10 +2,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Production cloud database (Neon Postgres — ap-south-1 / Singapore free tier).
+// Production cloud database (Neon Postgres).
+// DATABASE_URL       = pooled connection (PgBouncer) for app traffic
+// DATABASE_URL_UNPOOLED = direct connection for Prisma migrations / db push
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model Product {

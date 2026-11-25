@@ -8,5 +8,9 @@
     "db:seed": "pnpm --filter web db:seed",
     "build": "pnpm --filter web build"
   },
-  "packageManager": "pnpm@11.20.0"
+  "packageManager": "pnpm@11.20.0",
+  "dependencies": {
+    "@neon/config": "^1.14.6",
+    "@neon/env": "^2.1.9"
+  }
 }

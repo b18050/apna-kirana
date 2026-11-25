@@ -11,3 +11,4 @@ dist
 .turbo
 apps/web/prisma/dev.db
 apps/web/prisma/dev.db-journal
+.neon
