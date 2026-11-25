@@ -1,0 +1,12 @@
+{
+  "name": "apna-kirana",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "dev:mobile": "pnpm --filter mobile start",
+    "db:push": "pnpm --filter web db:push",
+    "db:seed": "pnpm --filter web db:seed",
+    "build": "pnpm --filter web build"
+  },
+  "packageManager": "pnpm@11.20.0"
+}

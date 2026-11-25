@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Local default is SQLite so the dukaan can run with ₹0 infra.
+// For Neon (production): change provider to "postgresql" and set DATABASE_URL.
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  nameHi      String
+  category    String
+  unit        String
+  mrpPaise    Int
+  pricePaise  Int
+  stockQty    Float
+  imageEmoji  String      @default("🛒")
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Customer {
+  id         String      @id @default(cuid())
+  phone      String      @unique
+  name       String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  addresses  Address[]
+  orders     Order[]
+  pushTokens PushToken[]
+}
+
+model Address {
+  id         String    @id @default(cuid())
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  line1      String
+  landmark   String
+  area       String
+  pin        String
+  isDefault  Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  orders     Order[]
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  customerId     String
+  customer       Customer    @relation(fields: [customerId], references: [id])
+  addressId      String
+  address        Address     @relation(fields: [addressId], references: [id])
+  status         String      @default("placed")
+  slotLabel      String
+  paymentMethod  String      @default("cod")
+  totalPaise     Int
+  notes          String      @default("")
+  stockApplied   Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  items          OrderItem[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  name        String
+  nameHi      String
+  unit        String
+  qty         Float
+  pricePaise  Int
+}
+
+model OtpChallenge {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model OtpAttempt {
+  id        String   @id @default(cuid())
+  phone     String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model PushToken {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  token      String
+  platform   String
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, token])
+}
+
+model StoreSettings {
+  id              String  @id @default("store")
+  storeName       String  @default("Apna Kirana")
+  storeNameHi     String  @default("अपना किराना")
+  area            String  @default("Manpur")
+  pin             String  @default("823003")
+  minOrderPaise   Int     @default(0)
+  slotsJson       String  @default("[\"Jaldi (1 ghanta)\",\"Dopahar 12–2\",\"Shaam 5–7\",\"Raat 8–9\"]")
+  hours           String  @default("Subah 8 baje – raat 9 baje")
+  upiEnabled      Boolean @default(false)
+  offersEnabled   Boolean @default(false)
+  contactPhone    String  @default("9876543210")
+  contactEmail    String  @default("dukaan@apnakirana.in")
+}
+
+model Offer {
+  id        String    @id @default(cuid())
+  title     String
+  titleHi   String
+  body      String
+  bodyHi    String
+  kind      String
+  deepLink  String    @default("/")
+  startsAt  DateTime?
+  endsAt    DateTime?
+  isActive  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+}
