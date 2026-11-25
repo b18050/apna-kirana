@@ -18,12 +18,15 @@ interface ShopScreenProps {
   loading: boolean;
   error: string | null;
   cart: Record<string, number>;
+  currentLocation?: { area: string; pin: string } | null;
   onRefresh: () => void;
   onUpdateQty: (product: Product, delta: number) => void;
   onReorder: (orderId: string) => void;
   onGoCart: () => void;
   onGoOrders: () => void;
   onGoAccount: () => void;
+  onPressLocation?: () => void;
+  onPressLogin?: () => void;
 }
 
 export function ShopScreen({
@@ -31,12 +34,15 @@ export function ShopScreen({
   loading,
   error,
   cart,
+  currentLocation,
   onRefresh,
   onUpdateQty,
   onReorder,
   onGoCart,
   onGoOrders,
   onGoAccount,
+  onPressLocation,
+  onPressLogin,
 }: ShopScreenProps) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
@@ -75,6 +81,16 @@ export function ShopScreen({
     <View style={styles.screen}>
       {/* Top Store Header */}
       <View style={styles.header}>
+        {/* Minute Bazar Style Quick Delivery Location Bar */}
+        <TouchableOpacity style={styles.deliveryBar} onPress={onPressLocation} activeOpacity={0.8}>
+          <View style={styles.deliveryLeft}>
+            <Text style={styles.speedBadge}>15-20 MINS</Text>
+            <Text style={styles.deliveryLocText} numberOfLines={1}>
+              📍 {currentLocation ? `${currentLocation.area} (${currentLocation.pin})` : (settings?.area ? `${settings.area} (${settings.pin})` : "Manpur, Gaya (823003)")} ▾
+            </Text>
+          </View>
+        </TouchableOpacity>
+
         <View style={styles.headerRow}>
           <View style={styles.brandRow}>
             <View style={styles.logoBox}>
@@ -94,10 +110,10 @@ export function ShopScreen({
             </View>
           </View>
 
-          <TouchableOpacity style={styles.accountPill} onPress={onGoAccount}>
+          <TouchableOpacity style={styles.accountPill} onPress={onPressLogin || onGoAccount}>
             <Ionicons name="person-circle-outline" size={18} color={COLORS.primary} />
             <Text style={styles.accountPillText}>
-              {home?.customer ? home.customer.name : "Login"}
+              {home?.customer ? home.customer.name.split(" ")[0] : "Login"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -407,6 +423,40 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primarySoft,
     borderWidth: 1,
     borderColor: COLORS.primaryBorder,
+  },
+  deliveryBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FED7AA",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginBottom: 8,
+  },
+  deliveryLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+  },
+  speedBadge: {
+    backgroundColor: COLORS.primary,
+    color: "#fff",
+    fontSize: 9,
+    fontWeight: "800",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    letterSpacing: 0.5,
+  },
+  deliveryLocText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: COLORS.text,
+    flex: 1,
   },
   accountPillText: { fontSize: 12, fontWeight: "600", color: COLORS.primary },
   searchWrap: {

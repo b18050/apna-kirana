@@ -15,9 +15,10 @@ export async function POST(req: Request) {
   return json({
     ok: true,
     via: result.via,
+    code: result.via === "admin_screen" ? result.code : undefined,
     hint:
       result.via === "admin_screen"
-        ? "OTP dukaan ke laptop par /admin/otps pe dikhega"
-        : "SMS bhej diya",
+        ? `Aapka OTP hai: ${result.code}`
+        : "SMS bhej diya gaya hai",
   });
 }

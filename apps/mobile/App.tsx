@@ -18,12 +18,14 @@ import { CartScreen } from "./src/screens/CartScreen";
 import { OrdersScreen } from "./src/screens/OrdersScreen";
 import { ShopScreen } from "./src/screens/ShopScreen";
 import { Address, Customer, HomeResponse, Order, Product } from "./src/types";
+import { OnboardingModal } from "./src/components/OnboardingModal";
 
 type Tab = "shop" | "cart" | "orders" | "account";
 
 const TOKEN_KEY = "ak_mobile_token";
 const CART_KEY = "ak_mobile_cart";
 const API_URL_KEY = "ak_mobile_api_url";
+const LOCATION_KEY = "ak_mobile_location";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("shop");
@@ -31,6 +33,9 @@ export default function App() {
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
   const [token, setToken] = useState<string | null>(null);
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [currentLocation, setCurrentLocation] = useState<{ area: string; pin: string } | null>(null);
+  const [onboardingVisible, setOnboardingVisible] = useState(false);
+  const [onboardingInitialStep, setOnboardingInitialStep] = useState<"location" | "phone">("location");
 
   const [home, setHome] = useState<HomeResponse | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -45,13 +50,30 @@ export default function App() {
       AsyncStorage.getItem(API_URL_KEY),
       AsyncStorage.getItem(TOKEN_KEY),
       AsyncStorage.getItem(CART_KEY),
+      AsyncStorage.getItem(LOCATION_KEY),
     ])
-      .then(([savedUrl, savedToken, savedCart]) => {
+      .then(([savedUrl, savedToken, savedCart, savedLoc]) => {
         if (savedUrl) setApiUrl(savedUrl);
         if (savedToken) setToken(savedToken);
         if (savedCart) {
           const parsed = JSON.parse(savedCart);
           if (parsed && typeof parsed === "object") setCart(parsed);
+        }
+        if (savedLoc) {
+          try {
+            setCurrentLocation(JSON.parse(savedLoc));
+          } catch {
+            // ignore
+          }
+        }
+        // First time opening: if no location saved, ask for location access!
+        if (!savedLoc) {
+          setOnboardingInitialStep("location");
+          setOnboardingVisible(true);
+        } else if (!savedToken) {
+          // If location is saved but not logged in, prompt for mobile number
+          setOnboardingInitialStep("phone");
+          setOnboardingVisible(true);
         }
       })
       .finally(() => setHydrated(true));
@@ -198,8 +220,13 @@ export default function App() {
     Alert.alert("Order Mil Gaya!", "Dukaan ne aapka order receive kar liya hai.");
   };
 
+  const handleSaveLocation = async (loc: { area: string; pin: string }) => {
+    await AsyncStorage.setItem(LOCATION_KEY, JSON.stringify(loc));
+    setCurrentLocation(loc);
+  };
+
   const handleRequestOtp = async (phone: string) => {
-    return apiFetch<{ ok: boolean; hint?: string }>(
+    return apiFetch<{ ok: boolean; hint?: string; code?: string }>(
       apiUrl,
       "/api/auth/otp/request",
       {
@@ -224,6 +251,7 @@ export default function App() {
     );
     await AsyncStorage.setItem(TOKEN_KEY, res.token);
     setToken(res.token);
+    await loadData();
     setTab("shop");
   };
 
@@ -241,6 +269,7 @@ export default function App() {
     await AsyncStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setOrders([]);
+    await loadData();
   };
 
   const handleSaveApiUrl = async (url: string) => {
@@ -263,12 +292,21 @@ export default function App() {
             loading={loading}
             error={error}
             cart={cart}
+            currentLocation={currentLocation}
             onRefresh={loadData}
             onUpdateQty={updateQty}
             onReorder={handleReorder}
             onGoCart={() => setTab("cart")}
             onGoOrders={() => setTab("orders")}
             onGoAccount={() => setTab("account")}
+            onPressLocation={() => {
+              setOnboardingInitialStep("location");
+              setOnboardingVisible(true);
+            }}
+            onPressLogin={() => {
+              setOnboardingInitialStep("phone");
+              setOnboardingVisible(true);
+            }}
           />
         )}
         {tab === "cart" && (
@@ -283,7 +321,10 @@ export default function App() {
             onUpdateQty={updateQty}
             onAddAddress={handleAddAddress}
             onPlaceOrder={handlePlaceOrder}
-            onGoLogin={() => setTab("account")}
+            onGoLogin={() => {
+              setOnboardingInitialStep("phone");
+              setOnboardingVisible(true);
+            }}
           />
         )}
         {tab === "orders" && (
@@ -293,7 +334,10 @@ export default function App() {
             loading={loading}
             onRefresh={loadData}
             onReorder={handleReorder}
-            onGoLogin={() => setTab("account")}
+            onGoLogin={() => {
+              setOnboardingInitialStep("phone");
+              setOnboardingVisible(true);
+            }}
           />
         )}
         {tab === "account" && (
@@ -336,6 +380,17 @@ export default function App() {
           onPress={() => setTab("account")}
         />
       </View>
+
+      <OnboardingModal
+        visible={onboardingVisible}
+        onClose={() => setOnboardingVisible(false)}
+        initialStep={onboardingInitialStep}
+        isLoggedIn={Boolean(token)}
+        currentLocation={currentLocation}
+        onSaveLocation={handleSaveLocation}
+        onRequestOtp={handleRequestOtp}
+        onVerifyOtp={handleVerifyOtp}
+      />
     </SafeAreaView>
   );
 }
