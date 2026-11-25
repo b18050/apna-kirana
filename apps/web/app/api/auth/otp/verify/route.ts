@@ -3,9 +3,26 @@ import { signToken } from "@/lib/auth";
 import { isValidInPhone } from "@/lib/inr";
 import { prisma } from "@/lib/prisma";
 
-// Max wrong attempts per phone per 10 minutes before lockout
+// In-memory brute-force guard: max 5 wrong attempts per phone per 10 min
+const attempts = new Map<string, { count: number; resetAt: number }>();
 const MAX_ATTEMPTS = 5;
-const WINDOW_MS = 10 * 60 * 1000;
+const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
+function checkBruteForce(phone: string): boolean {
+  const now = Date.now();
+  const rec = attempts.get(phone);
+  if (!rec || rec.resetAt < now) {
+    attempts.set(phone, { count: 1, resetAt: now + WINDOW_MS });
+    return true; // allowed
+  }
+  if (rec.count >= MAX_ATTEMPTS) return false; // blocked
+  rec.count++;
+  return true;
+}
+
+function resetAttempts(phone: string) {
+  attempts.delete(phone);
+}
 
 export async function POST(req: Request) {
   const { phone, code, name } = (await req.json()) as {
@@ -18,17 +35,9 @@ export async function POST(req: Request) {
     return json({ error: "Phone aur OTP dono chahiye" }, 400);
   }
 
-  // Brute-force protection: count recent failed attempts across all unconsumed challenges for this phone
-  const recentFailures = await prisma.otpAttempt.count({
-    where: {
-      phone: cleaned,
-      success: false,
-      createdAt: { gt: new Date(Date.now() - WINDOW_MS) },
-    },
-  });
-  if (recentFailures >= MAX_ATTEMPTS) {
+  if (!checkBruteForce(cleaned)) {
     return json(
-      { error: "Bahut zyada galat koshish. 10 minute baad try karein." },
+      { error: "Bahut zyada galat koshishein. 10 minute baad try karein." },
       429
     );
   }
@@ -37,21 +46,16 @@ export async function POST(req: Request) {
     where: { phone: cleaned, consumed: false, code: code.trim() },
     orderBy: { createdAt: "desc" },
   });
-
   if (!challenge || challenge.expiresAt < new Date()) {
-    // Log failed attempt
-    await prisma.otpAttempt.create({ data: { phone: cleaned, success: false } });
     return json({ error: "OTP galat ya expire ho gaya" }, 400);
   }
 
-  await Promise.all([
-    prisma.otpChallenge.update({
-      where: { id: challenge.id },
-      data: { consumed: true },
-    }),
-    // Log success so the window resets cleanly
-    prisma.otpAttempt.create({ data: { phone: cleaned, success: true } }),
-  ]);
+  resetAttempts(cleaned);
+
+  await prisma.otpChallenge.update({
+    where: { id: challenge.id },
+    data: { consumed: true },
+  });
 
   const displayName = (name ?? "").trim() || "Grahak";
   const customer = await prisma.customer.upsert({

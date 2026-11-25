@@ -87,15 +87,6 @@ model OtpChallenge {
   createdAt DateTime @default(now())
 }
 
-model OtpAttempt {
-  id        String   @id @default(cuid())
-  phone     String
-  success   Boolean
-  createdAt DateTime @default(now())
-
-  @@index([phone, createdAt])
-}
-
 model PushToken {
   id         String   @id @default(cuid())
   customerId String
