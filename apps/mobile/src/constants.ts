@@ -3,8 +3,7 @@ import { Platform } from "react-native";
 const IST = "Asia/Kolkata";
 
 export const DEFAULT_API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000");
+  process.env.EXPO_PUBLIC_API_URL || "https://web-kirana-app1.vercel.app";
 
 export function paiseToInr(paise: number): string {
   return new Intl.NumberFormat("en-IN", {
