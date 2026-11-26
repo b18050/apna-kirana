@@ -72,7 +72,7 @@ export function OnboardingModal({
             {
               title: "Location Permission",
               message:
-                "Apna Kirana ko aapke ghar taaza saman pahunchane ke liye location access chahiye.",
+                "Lalu Kirana ko aapke ghar taaza saman pahunchane ke liye location access chahiye.",
               buttonPositive: "Allow / Manzoor",
               buttonNegative: "Cancel",
             }
@@ -192,7 +192,7 @@ export function OnboardingModal({
 
           {/* Close / Skip button */}
           <View style={styles.headerRow}>
-            <Text style={styles.brandBadge}>Apna Kirana · अपना किराना</Text>
+            <Text style={styles.brandBadge}>Lalu Kirana · लालू किराना</Text>
             <TouchableOpacity onPress={onClose} style={styles.skipBtn}>
               <Text style={styles.skipText}>Skip ✕</Text>
             </TouchableOpacity>
@@ -207,7 +207,7 @@ export function OnboardingModal({
                 </View>
                 <Text style={styles.title}>Delivery Location Chunein</Text>
                 <Text style={styles.subtitle}>
-                  Minute Bazar aur Apna Kirana se 15-20 minute mein taaza sabzi aur ration aapke ghar tak.
+                  Minute Bazar aur Lalu Kirana se 15-20 minute mein taaza sabzi aur ration aapke ghar tak.
                 </Text>
 
                 {currentLocation && (

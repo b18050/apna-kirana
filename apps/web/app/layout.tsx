@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Apna Kirana · अपना किराना",
+  title: "Lalu Kirana · लालू किराना",
   description:
     "Your neighborhood kirana store — fresh groceries, everyday essentials, slot delivery, and Cash on Delivery.",
 };

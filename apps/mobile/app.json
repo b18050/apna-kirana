@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Apna Kirana",
-    "slug": "apna-kirana",
+    "name": "Lalu Kirana",
+    "slug": "lalu-kirana",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,7 +10,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.apnakirana.app",
+      "package": "com.lalukirana.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
